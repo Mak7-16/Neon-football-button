@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Football Top Corner Goal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Inter:wght@400;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #030408;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .font-neon {
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    /* --- Green Brick & Neon Sign Styles (Matching Image) --- */
+    .brick-bg {
+      background-color: #050706;
+      background-image: 
+        linear-gradient(335deg, rgba(0, 0, 0, 0.85) 0%, rgba(5, 10, 5, 0.95) 100%),
+        linear-gradient(rgba(20, 30, 20, 0.25) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(20, 30, 20, 0.25) 2px, transparent 2px),
+        linear-gradient(rgba(20, 30, 20, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 30, 20, 0.15) 1px, transparent 1px);
+      background-size: 100% 100%, 60px 30px, 60px 30px, 30px 15px, 30px 15px;
+      background-position: 0 0, 0 0, 0 0, 15px 7.5px, 15px 7.5px;
+    }
+
+    .neon-text-green {
+      color: #39ff14;
+      text-shadow: 
+        0 0 5px #39ff14,
+        0 0 10px #39ff14,
+        0 0 20px #39ff14,
+        0 0 40px #00ff66,
+        0 0 80px #00ff66;
+    }
+
+    /* Green Neon Sign Slide Animation: Right -> Center (pause 2s) -> Left */
+    .neon-slide-sequence {
+      animation: neonSlideAcross 3.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes neonSlideAcross {
+      0% {
+        transform: translate(120vw, -50%);
+        opacity: 0;
+      }
+      20% {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+      }
+      80% {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-180vw, -50%);
+        opacity: 0;
+      }
+    }
+
+    /* --- Glow Filters --- */
+    .glow-cyan {
+      filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.8)) drop-shadow(0 0 20px rgba(0, 243, 255, 0.4));
+    }
+    .glow-pink {
+      filter: drop-shadow(0 0 8px rgba(255, 0, 127, 0.8)) drop-shadow(0 0 20px rgba(255, 0, 127, 0.4));
+    }
+    .glow-yellow {
+      filter: drop-shadow(0 0 10px rgba(255, 230, 0, 0.9)) drop-shadow(0 0 25px rgba(255, 230, 0, 0.5));
+    }
+    .glow-green {
+      filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.8)) drop-shadow(0 0 20px rgba(57, 255, 20, 0.4));
+    }
+
+    /* --- Crowd Lighting Flash Effect --- */
+    .crowd-flash {
+      animation: flashCrowd 0.8s ease-out;
+    }
+    @keyframes flashCrowd {
+      0%, 100% { opacity: 0.25; }
+      20%, 50% { opacity: 0.9; }
+    }
+
+    /* --- Goal Target Glow Pulse --- */
+    .target-pulse {
+      animation: pulseTarget 1.5s infinite alternate;
+    }
+    @keyframes pulseTarget {
+      from { stroke: #ffe600; filter: drop-shadow(0 0 5px #ffe600); }
+      to { stroke: #ff007f; filter: drop-shadow(0 0 15px #ff007f); }
+    }
+
+    /* --- Neon Goal Net Flash --- */
+    .net-hit {
+      animation: netVibrate 0.6s ease-in-out;
+    }
+    @keyframes netVibrate {
+      0% { transform: scale(1); stroke: #00f3ff; }
+      20% { transform: scale(1.02) translateY(-2px); stroke: #ffe600; }
+      40% { transform: scale(0.99) translateY(1px); stroke: #ff007f; }
+      100% { transform: scale(1); stroke: #00f3ff; }
+    }
+
+    /* --- Neon Ball Pulse on Kick --- */
+    .ball-pulse {
+      box-shadow: 0 0 20px #00f3ff, 0 0 40px #00f3ff, inset 0 0 15px #00f3ff;
+    }
+  </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between items-center relative overflow-hidden brick-bg text-white">
+
+  <!-- TOP BAR: SCORE & BANNER -->
+  <header class="w-full max-w-4xl pt-4 px-6 flex justify-between items-center z-30">
+    <div class="flex items-center space-x-3">
+      <div class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></div>
+      <span class="font-neon text-cyan-400 text-sm md:text-base tracking-widest uppercase">STRIKER MODE</span>
+    </div>
+
+    <!-- Score Board -->
+    <div class="bg-black/60 border border-cyan-500/40 px-6 py-2 rounded-full flex items-center gap-4 backdrop-blur-md glow-cyan">
+      <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">ГОЛИ:</span>
+      <span id="scoreCounter" class="font-neon text-2xl font-black text-yellow-400">0</span>
+    </div>
+  </header>
+
+  <!-- STADIUM & PITCH CANVAS CONTAINER -->
+  <main id="stadiumStage" class="relative w-full max-w-5xl h-[70vh] flex justify-center items-end px-4">
+    
+    <!-- 1. STADIUM CROWD BACKGROUND LAYER -->
+    <div id="crowdLayer" class="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-[#090b14] via-[#050711] to-transparent opacity-35 transition-opacity duration-300">
+      <!-- Neon Stadium Crowd Lights Array -->
+      <svg class="w-full h-full opacity-60" viewBox="0 0 1000 300" preserveAspectRatio="none">
+        <!-- Floodlights -->
+        <g stroke="#00f3ff" stroke-width="2" class="opacity-50">
+          <line x1="100" y1="0" x2="150" y2="120" />
+          <line x1="900" y1="0" x2="850" y2="120" />
+        </g>
+        <!-- Crowd Silhouettes Dots -->
+        <g id="crowdDots">
+          <!-- JS fills or static dots -->
+        </g>
+      </svg>
+    </div>
+
+    <!-- 2. NEON PITCH / LAWN LAYER -->
+    <div class="absolute bottom-0 w-full h-[65%] pointer-events-none">
+      <svg class="w-full h-full" viewBox="0 0 1000 500" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#02140a" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#053319" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Grass Pitch Base -->
+        <polygon points="0,500 1000,500 850,0 150,0" fill="url(#grassGrad)" />
+
+        <!-- Neon Grass Lines Perspective -->
+        <g stroke="#39ff14" stroke-width="1.5" opacity="0.4" class="glow-green">
+          <!-- Outer Penalty Area Perspective -->
+          <polygon points="200,500 800,500 700,120 300,120" fill="none" stroke-width="2"/>
+          <polygon points="320,120 680,120 650,20 350,20" fill="none" stroke-width="1.5"/>
+          
+          <!-- Penalty Arc -->
+          <path d="M 400 120 A 100 40 0 0 1 600 120" fill="none" stroke-dasharray="6,6" />
+          
+          <!-- Penalty Spot -->
+          <circle cx="500" cy="220" r="4" fill="#39ff14"/>
+
+          <!-- Pitch Stripes Lines -->
+          <line x1="0" y1="380" x2="1000" y2="380" opacity="0.3"/>
+          <line x1="0" y1="260" x2="1000" y2="260" opacity="0.2"/>
+          <line x1="0" y1="170" x2="1000" y2="170" opacity="0.2"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- 3. NEON GOAL POST & TARGET 9-KA -->
+    <div class="absolute top-[8%] w-[320px] sm:w-[460px] md:w-[580px] h-[160px] sm:h-[220px] md:h-[260px] z-10 flex justify-center">
+      <svg id="goalSvg" class="w-full h-full overflow-visible" viewBox="0 0 600 280">
+        <!-- Goal Net Lines -->
+        <g stroke="#00f3ff" stroke-width="0.8" opacity="0.3" id="goalNet">
+          <!-- Vertical Net Lines -->
+          <path d="M 50 40 L 50 250 M 100 40 L 100 250 M 150 40 L 150 250 M 200 40 L 200 250 M 250 40 L 250 250 M 300 40 L 300 250 M 350 40 L 350 250 M 400 40 L 400 250 M 450 40 L 450 250 M 500 40 L 500 250 M 550 40 L 550 250" />
+          <!-- Horizontal Net Lines -->
+          <path d="M 50 80 L 550 80 M 50 120 L 550 120 M 50 160 L 550 160 M 50 200 L 550 200 M 50 240 L 550 240" />
+        </g>
+
+        <!-- Goal Frame (Posts + Crossbar) -->
+        <path d="M 40 260 L 40 30 L 560 30 L 560 260" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" class="glow-cyan" />
+        <path d="M 40 260 L 40 30 L 560 30 L 560 260" fill="none" stroke="#00f3ff" stroke-width="4" stroke-linecap="round" />
+
+        <!-- Top Right Corner "9-KA" Target Zone -->
+        <g id="targetZone" class="cursor-pointer">
+          <!-- Target Glowing Circle -->
+          <circle cx="505" cy="85" r="32" fill="rgba(255,0,127,0.15)" stroke="#ffe600" stroke-width="3" stroke-dasharray="8,4" class="target-pulse" />
+          <circle cx="505" cy="85" r="14" fill="none" stroke="#ff007f" stroke-width="2" />
+          <text x="505" y="91" text-anchor="middle" fill="#ffe600" font-size="16" font-weight="900" class="font-neon">9</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- 4. GOAL ANNOUNCEMENT BANNER (POP-UP EFFECT) -->
+    <div id="goalBanner" class="absolute top-[20%] z-30 opacity-0 pointer-events-none transform scale-50 transition-all duration-300 flex flex-col items-center">
+      <h1 class="font-neon text-6xl md:text-8xl font-black text-yellow-300 tracking-wider glow-yellow italic drop-shadow-[0_0_35px_rgba(255,230,0,1)]">
+        ГООЛ!
+      </h1>
+      <span class="font-neon text-pink-500 text-lg md:text-2xl tracking-widest mt-1 glow-pink uppercase">
+        Прямо в дев'ятку! ⚽🔥
+      </span>
+    </div>
+
+    <!-- 4B. SLIDING GREEN NEON "FOOTBALL" BANNER (SLIDES IN FROM RIGHT, PAUSES 2s IN CENTER, SLIDES LEFT) -->
+    <div id="neonFootballBanner" class="fixed top-1/2 left-1/2 -translate-y-1/2 opacity-0 pointer-events-none z-50 flex items-center justify-center">
+      <div class="px-8 py-4 bg-black/80 border-2 border-[#39ff14]/40 rounded-2xl shadow-[0_0_50px_rgba(57,255,20,0.3)] backdrop-blur-md">
+        <svg viewBox="0 0 650 120" class="w-[320px] sm:w-[480px] md:w-[620px] h-auto overflow-visible">
+          <!-- Stylized Double-Line "FOOTBALL" SVG (Matching attached reference) -->
+          <g fill="none" stroke="#39ff14" stroke-linecap="round" stroke-linejoin="round" class="glow-green">
+            <!-- Outermost Glow Trace -->
+            <g stroke-width="7" opacity="0.4">
+              <!-- F -->
+              <path d="M 30 20 L 30 100 M 30 20 L 80 20 M 30 55 L 75 55 M 42 32 L 42 100 M 42 32 L 72 32 M 42 67 L 68 67" />
+              <!-- O -->
+              <rect x="100" y="20" width="60" height="80" rx="20" />
+              <rect x="112" y="32" width="36" height="56" rx="12" />
+              <!-- O -->
+              <rect x="180" y="20" width="60" height="80" rx="20" />
+              <rect x="192" y="32" width="36" height="56" rx="12" />
+              <!-- T -->
+              <path d="M 260 20 L 330 20 M 295 20 L 295 100 M 270 32 L 320 32 M 307 32 L 307 100" />
+              <!-- B -->
+              <path d="M 350 20 L 350 100 M 350 20 C 400 20, 400 55, 350 55 C 405 55, 405 100, 350 100 M 362 32 L 362 88 M 362 32 C 388 32, 388 47, 362 47 M 362 63 C 392 63, 392 88, 362 88" />
+              <!-- A -->
+              <path d="M 430 100 L 460 20 L 490 100 M 442 67 L 478 67 M 442 100 L 460 42 L 478 100 M 450 78 L 470 78" />
+              <!-- L -->
+              <path d="M 510 20 L 510 100 L 560 100 M 522 32 L 522 88 L 560 88" />
+              <!-- L -->
+              <path d="M 580 20 L 580 100 L 630 100 M 592 32 L 592 88 L 630 88" />
+            </g>
+            <!-- Core Bright Neon Tubes -->
+            <g stroke-width="3" stroke="#ffffff">
+              <!-- F -->
+              <path d="M 30 20 L 30 100 M 30 20 L 80 20 M 30 55 L 75 55 M 42 32 L 42 100 M 42 32 L 72 32 M 42 67 L 68 67" />
+              <!-- O -->
+              <rect x="100" y="20" width="60" height="80" rx="20" />
+              <rect x="112" y="32" width="36" height="56" rx="12" />
+              <!-- O -->
+              <rect x="180" y="20" width="60" height="80" rx="20" />
+              <rect x="192" y="32" width="36" height="56" rx="12" />
+              <!-- T -->
+              <path d="M 260 20 L 330 20 M 295 20 L 295 100 M 270 32 L 320 32 M 307 32 L 307 100" />
+              <!-- B -->
+              <path d="M 350 20 L 350 100 M 350 20 C 400 20, 400 55, 350 55 C 405 55, 405 100, 350 100 M 362 32 L 362 88 M 362 32 C 388 32, 388 47, 362 47 M 362 63 C 392 63, 392 88, 362 88" />
+              <!-- A -->
+              <path d="M 430 100 L 460 20 L 490 100 M 442 67 L 478 67 M 442 100 L 460 42 L 478 100 M 450 78 L 470 78" />
+              <!-- L -->
+              <path d="M 510 20 L 510 100 L 560 100 M 522 32 L 522 88 L 560 88" />
+              <!-- L -->
+              <path d="M 580 20 L 580 100 L 630 100 M 592 32 L 592 88 L 630 88" />
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 5. NEON PLAYER SILHOUETTE (HIDDEN BY DEFAULT, APPEARS ON KICK) -->
+    <div id="neonPlayer" class="absolute bottom-[35px] left-[calc(50%-170px)] w-[160px] h-[190px] opacity-0 pointer-events-none z-20 transition-all">
+      <svg viewBox="0 0 120 140" class="w-full h-full">
+        <!-- Neon Football Player Vector Body -->
+        <g stroke="#ff007f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="glow-pink">
+          <!-- Head -->
+          <circle cx="35" cy="22" r="9" />
+          <!-- Torso -->
+          <path d="M 35 31 L 52 55 L 38 78" />
+          <!-- Arms -->
+          <path d="M 20 42 L 35 34 L 58 42" />
+          <!-- Support Leg -->
+          <path d="M 38 78 L 22 108 L 15 118" />
+          <!-- Kicking Leg (Striking extended position) -->
+          <path id="kickingLeg" d="M 38 78 L 78 72 L 95 62" stroke="#ffe600" stroke-width="6" class="glow-yellow" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- 6. FLYING BALL STRIKE EFFECT CONTAINER -->
+    <div id="animBallContainer" class="absolute bottom-[25px] left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-0">
+      <div id="animatedBall" class="w-12 h-12 rounded-full border-2 border-cyan-300 bg-cyan-950/80 flex items-center justify-center glow-cyan">
+        <svg viewBox="0 0 100 100" class="w-full h-full p-1">
+          <polygon points="50,25 65,38 60,58 40,58 35,38" fill="none" stroke="#00f3ff" stroke-width="4" />
+          <line x1="50" y1="25" x2="50" y2="5" stroke="#00f3ff" stroke-width="4" />
+          <line x1="65" y1="38" x2="95" y2="30" stroke="#00f3ff" stroke-width="4" />
+          <line x1="60" y1="58" x2="80" y2="90" stroke="#00f3ff" stroke-width="4" />
+          <line x1="40" y1="58" x2="20" y2="90" stroke="#00f3ff" stroke-width="4" />
+          <line x1="35" y1="38" x2="5" y2="30" stroke="#00f3ff" stroke-width="4" />
+        </svg>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER / KICK BUTTON CONTROL -->
+  <footer class="w-full pb-8 flex flex-col items-center justify-center z-30">
+    <!-- Glowing Kick Button -->
+    <button id="kickButton" class="group relative outline-none border-none bg-transparent cursor-pointer">
+      <!-- Glow Aura Behind Button -->
+      <div class="absolute -inset-2 rounded-full bg-gradient-to-r from-cyan-500 via-pink-500 to-yellow-400 opacity-70 blur-md group-hover:opacity-100 transition duration-300"></div>
+
+      <!-- Main Ball Button Body -->
+      <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-black/90 border-2 border-cyan-400 p-2 flex items-center justify-center transition-transform transform active:scale-90 group-hover:scale-105 ball-pulse">
+        <svg viewBox="0 0 100 100" class="w-full h-full transform group-hover:rotate-45 transition-transform duration-500">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#00f3ff" stroke-width="3" class="glow-cyan" />
+          <!-- Hexagon Patterns -->
+          <polygon points="50,30 65,40 60,60 40,60 35,40" fill="none" stroke="#00f3ff" stroke-width="3" />
+          <line x1="50" y1="30" x2="50" y2="5" stroke="#00f3ff" stroke-width="3" />
+          <line x1="65" y1="40" x2="95" y2="30" stroke="#00f3ff" stroke-width="3" />
+          <line x1="60" y1="60" x2="80" y2="92" stroke="#00f3ff" stroke-width="3" />
+          <line x1="40" y1="60" x2="20" y2="92" stroke="#00f3ff" stroke-width="3" />
+          <line x1="35" y1="40" x2="5" y2="30" stroke="#00f3ff" stroke-width="3" />
+        </svg>
+      </div>
+    </button>
+    
+    <p class="text-xs text-gray-400 font-neon mt-3 tracking-wider uppercase">Натисніть для удару в дев'ятку</p>
+  </footer>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Elements Reference
+    const kickButton = document.getElementById('kickButton');
+    const neonPlayer = document.getElementById('neonPlayer');
+    const animBallContainer = document.getElementById('animBallContainer');
+    const animatedBall = document.getElementById('animatedBall');
+    const goalBanner = document.getElementById('goalBanner');
+    const neonFootballBanner = document.getElementById('neonFootballBanner');
+    const scoreCounter = document.getElementById('scoreCounter');
+    const goalNet = document.getElementById('goalNet');
+    const crowdLayer = document.getElementById('crowdLayer');
+    const crowdDots = document.getElementById('crowdDots');
+
+    let goalsScore = 0;
+    let isAnimating = false;
+
+    // Generate Stadium Crowd Dots SVG
+    (function populateCrowd() {
+      let dotsHtml = '';
+      const colors = ['#00f3ff', '#ff007f', '#ffe600', '#ffffff'];
+      for (let i = 0; i < 180; i++) {
+        const cx = Math.random() * 1000;
+        const cy = Math.random() * 180;
+        const r = Math.random() * 2.5 + 1;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const opacity = Math.random() * 0.7 + 0.3;
+        dotsHtml += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity="${opacity}" />`;
+      }
+      crowdDots.innerHTML = dotsHtml;
+    })();
+
+    // Sound effect using Web Audio API (synthetic neon sounds, no external files)
+    function playKickSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Whoosh / Kick Impact
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.8, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch (e) {
+        // Audio fallback silent
+      }
+    }
+
+    function playGoalSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // High Neon Synth Chime for Goal
+        const notes = [440, 554.37, 659.25, 880];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.08);
+          osc.stop(ctx.currentTime + idx * 0.08 + 0.4);
+        });
+      } catch (e) {}
+    }
+
+    // MAIN STRIKE ANIMATION SEQUENCE
+    function triggerKickSequence() {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      // 1. Play Sound
+      playKickSound();
+
+      // 2. Hide static kick button visually during strike action
+      kickButton.style.opacity = '0.3';
+      kickButton.style.pointerEvents = 'none';
+
+      // 3. Show Neon Football Player & Animate Strike Position
+      neonPlayer.style.opacity = '1';
+      neonPlayer.style.transform = 'translate(20px, -10px) scale(1.05)';
+
+      // 4. Ball Animation to Top Corner (9-ka)
+      // Target coordinates relative to start position
+      animBallContainer.style.opacity = '1';
+      animBallContainer.style.transition = 'none';
+      animBallContainer.style.transform = 'translate(-50%, 0px) scale(1)';
+      animatedBall.style.transform = 'rotate(0deg)';
+
+      // Trigger reflow
+      void animBallContainer.offsetWidth;
+
+      // Calculate trajectory towards top-right corner 9-ka
+      // Smooth high-speed curve & shrink due to depth perspective
+      animBallContainer.style.transition = 'transform 0.65s cubic-bezier(0.15, 0.85, 0.35, 1)';
+      animatedBall.style.transition = 'transform 0.65s linear';
+      
+      // Target translation: right towards top corner & up into goal net
+      const deltaX = window.innerWidth > 640 ? 190 : 120;
+      const deltaY = -(window.innerHeight * 0.42);
+      
+      animBallContainer.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.4)`;
+      animatedBall.style.transform = 'rotate(720deg)';
+
+      // 5. Player disappears after striking
+      setTimeout(() => {
+        neonPlayer.style.opacity = '0';
+        neonPlayer.style.transform = 'translate(0, 0) scale(1)';
+      }, 350);
+
+      // 6. Goal Net Hit & Celebrations Trigger
+      setTimeout(() => {
+        playGoalSound();
+        
+        // Vibrate Goal Net
+        goalNet.classList.add('net-hit');
+        setTimeout(() => goalNet.classList.remove('net-hit'), 600);
+
+        // Flash Stadium Crowd
+        crowdLayer.classList.add('crowd-flash');
+        setTimeout(() => crowdLayer.classList.remove('crowd-flash'), 800);
+
+        // Update Score Counter
+        goalsScore++;
+        scoreCounter.textContent = goalsScore;
+        scoreCounter.classList.add('scale-125', 'text-green-400');
+        setTimeout(() => scoreCounter.classList.remove('scale-125', 'text-green-400'), 300);
+
+        // Show "ГООЛ!" Banner
+        goalBanner.style.opacity = '1';
+        goalBanner.style.transform = 'scale(1)';
+
+        // Trigger Neon Green "FOOTBALL" Banner sequence (Right -> Center pause 2s -> Left)
+        setTimeout(() => {
+          neonFootballBanner.classList.remove('neon-slide-sequence');
+          void neonFootballBanner.offsetWidth; // Force reflow
+          neonFootballBanner.classList.add('neon-slide-sequence');
+        }, 150);
+
+        // Fade Out Ball in net
+        animBallContainer.style.opacity = '0';
+
+      }, 650);
+
+      // 7. Reset Sequence for Endless Play
+      setTimeout(() => {
+        // Hide goal banner
+        goalBanner.style.opacity = '0';
+        goalBanner.style.transform = 'scale(0.5)';
+
+        // Reset Neon Football Banner class after its sequence finishes
+        setTimeout(() => {
+          neonFootballBanner.classList.remove('neon-slide-sequence');
+        }, 1500);
+
+        // Restore kick button
+        kickButton.style.opacity = '1';
+        kickButton.style.pointerEvents = 'auto';
+
+        // Reset ball position
+        animBallContainer.style.transition = 'none';
+        animBallContainer.style.transform = 'translate(-50%, 0px) scale(1)';
+
+        isAnimating = false;
+      }, 3400);
+    }
+
+    // Event Listeners
+    kickButton.addEventListener('click', triggerKickSequence);
+    document.getElementById('targetZone').addEventListener('click', triggerKickSequence);
+  </script>
+</body>
+</html>
